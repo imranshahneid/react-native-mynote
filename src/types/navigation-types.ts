@@ -1,7 +1,7 @@
 export type MainStackParamList = {
   SplashScreen: undefined;
   MainTabNavigator: undefined;
-  NoteEditor: undefined;
+  NoteEditor: {toCreateNoteId: number};
 };
 
 export type MainTabParamList = {

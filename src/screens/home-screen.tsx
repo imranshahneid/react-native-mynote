@@ -46,7 +46,11 @@ const HomeScreen = (props: Props) => {
         console.log('No Notes');
         return;
       }
-      console.log('Yeah Notes', JSON.parse(notes));
+      console.log(
+        'Saved Notes List',
+        JSON.stringify(JSON.parse(notes), null, 3),
+      );
+      setNotes(JSON.parse(notes));
     } catch (error) {
       console.log('Error while getting the saved notes');
     } finally {
@@ -55,7 +59,9 @@ const HomeScreen = (props: Props) => {
   };
 
   const onAddPress = () => {
-    navigation.navigate('NoteEditor');
+    navigation.navigate('NoteEditor', {
+      toCreateNoteId: !notes ? 1 : notes.length + 1,
+    });
   };
 
   return (

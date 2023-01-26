@@ -5,14 +5,24 @@ import {
   Text,
   View,
 } from 'react-native';
-import React, {useState} from 'react';
-import {SafeAreaView} from 'react-native-safe-area-context';
+import React, {useEffect, useState} from 'react';
+import {SafeAreaView, useSafeAreaInsets} from 'react-native-safe-area-context';
 import {Colors} from '../constants/colors';
 import NoteHeader from '../components/note-header';
 import {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import {MainStackParamList} from '../types/navigation-types';
-import {useNavigation} from '@react-navigation/native';
+import {RouteProp, useNavigation, useRoute} from '@react-navigation/native';
 import PostIcon from '../../assets/icons/PostIcon';
+import {useFormik} from 'formik';
+import {noteValidationSchema} from '../utils/validation-schemas';
+import ValidationTextInput from '../components/validation-text-input';
+import {CategoryType, Note} from '../types/general-types';
+import {categoryList, clientList} from '../constants/constants';
+import WheelPickerModal from '../components/WheelPickerModal';
+import ItemPicker from '../components/item-picker';
+import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import {note_key} from '../constants/storage-keys';
 
 type Props = {};
 
@@ -22,13 +32,67 @@ type NavigationProp = NativeStackNavigationProp<
 >;
 
 const NoteEditor = (props: Props) => {
+  const route = useRoute<RouteProp<MainStackParamList, 'NoteEditor'>>();
   const navigation = useNavigation<NavigationProp>();
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [selectedClient, setSelectedClient] = useState<string>(
+    clientList[0].name,
+  );
+  const [selectedCategory, setSelectedCatrgory] =
+    useState<CategoryType>('Goal Evidence');
+  const [isCategoryPickerVisible, setIsCategoryPickerVisible] =
+    useState<boolean>(false);
+  const [isClientPickerVisible, setIsClientPickerVisible] =
+    useState<boolean>(false);
+  const [notesHeight, setNotesHeight] = useState<number>(100);
 
-  const createNote = async () => {};
+  useEffect(() => {
+    console.log('To Create Note Id', route.params.toCreateNoteId);
+  }, []);
+
+  const Formik = useFormik({
+    initialValues: {
+      note: '',
+    },
+    validationSchema: noteValidationSchema,
+    onSubmit: async value => {
+      createNote(value.note);
+    },
+  });
+
+  const createNote = async (note: string) => {
+    const clientInfo = clientList.filter(
+      client => client.name === selectedClient,
+    );
+    if (!clientInfo) return;
+    const toSaveNote: Note = {
+      id: route.params.toCreateNoteId,
+      client: clientInfo[0],
+      category: selectedCategory,
+      note: note,
+    };
+    console.log('Note to be saved', JSON.stringify(toSaveNote, null, 3));
+    let savedNotes = await AsyncStorage.getItem(note_key);
+    if (!savedNotes) {
+      await AsyncStorage.setItem(note_key, JSON.stringify([toSaveNote]));
+      return;
+    }
+    let parsedNotes: Note[] = JSON.parse(savedNotes);
+    parsedNotes = [...parsedNotes, toSaveNote];
+    await AsyncStorage.setItem(note_key, JSON.stringify(parsedNotes));
+    console.log('Save Successful');
+  };
+
+  const closeClientPickerModal = () => {
+    setIsClientPickerVisible(false);
+  };
+
+  const closeCategoryPickerModal = () => {
+    setIsCategoryPickerVisible(false);
+  };
 
   return (
-    <SafeAreaView style={styles.mainContainer}>
+    <SafeAreaView style={[styles.mainContainer]}>
       <NoteHeader
         title="Create Note"
         onBackPress={() => navigation.goBack()}
@@ -38,11 +102,76 @@ const NoteEditor = (props: Props) => {
               <ActivityIndicator size={'small'} color={Colors.WHITE} />
             </View>
           ) : (
-            <PostIcon style={styles.iconStyle} onPress={() => createNote()} />
+            <PostIcon
+              style={styles.iconStyle}
+              onPress={() => Formik.submitForm()}
+            />
           )
         }
       />
-      <Text>NoteEditor</Text>
+      <KeyboardAwareScrollView contentContainerStyle={styles.contentContainer}>
+        <ItemPicker
+          label="Client Name"
+          text={selectedClient}
+          onPress={() => setIsClientPickerVisible(true)}
+          style={{marginBottom: 8}}
+        />
+        <ItemPicker
+          label={'Category'}
+          text={selectedCategory}
+          onPress={() => setIsCategoryPickerVisible(true)}
+        />
+        <ValidationTextInput
+          label="Note Details"
+          value={Formik.values.note}
+          onChangeText={text => Formik.setFieldValue('note', text)}
+          errorMessage={Formik.errors.note}
+          touched={Formik.touched.note}
+          textInputStyle={{
+            height: notesHeight,
+            minHeight: 100,
+            maxHeight: Dimensions.get('screen').height * 0.4,
+          }}
+          textAlignVertical={'top'}
+          multiline
+          autoFocus
+          numberOfLines={10}
+          onContentSizeChange={e =>
+            setNotesHeight(e.nativeEvent.contentSize.height)
+          }
+          placeholder={'Start typing ....'}
+        />
+      </KeyboardAwareScrollView>
+      <WheelPickerModal
+        isModalVisible={isClientPickerVisible}
+        onSwipeComplete={closeClientPickerModal}
+        onBackdropPress={closeClientPickerModal}
+        selectedItem={selectedClient}
+        pickerItems={clientList.map(client => {
+          return client.name;
+        })}
+        onTickPress={closeClientPickerModal}
+        onItemSelected={item => {
+          if (typeof item == 'number') {
+            return;
+          }
+          setSelectedClient(item);
+        }}
+      />
+      <WheelPickerModal
+        isModalVisible={isCategoryPickerVisible}
+        onSwipeComplete={closeCategoryPickerModal}
+        onBackdropPress={closeCategoryPickerModal}
+        selectedItem={selectedCategory}
+        pickerItems={categoryList}
+        onTickPress={closeCategoryPickerModal}
+        onItemSelected={item => {
+          if (typeof item == 'number') {
+            return;
+          }
+          setSelectedCatrgory(item as CategoryType);
+        }}
+      />
     </SafeAreaView>
   );
 };
@@ -50,6 +179,11 @@ const NoteEditor = (props: Props) => {
 export default NoteEditor;
 
 const styles = StyleSheet.create({
+  contentContainer: {
+    height: '100%',
+    width: '100%',
+    backgroundColor: Colors.WHITE,
+  },
   iconStyle: {
     backgroundColor: Colors.MYNOTE_GREEN,
     borderRadius: 32,
