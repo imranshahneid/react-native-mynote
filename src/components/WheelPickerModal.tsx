@@ -13,7 +13,6 @@ type ComponentProps = {
   onSwipeComplete: () => void;
   onBackdropPress: () => void;
   onTickPress: () => void;
-  // setInitialValue: (item: string | number) => void;
 };
 
 const WheelPickerModal: React.FunctionComponent<ComponentProps> = ({
@@ -24,14 +23,11 @@ const WheelPickerModal: React.FunctionComponent<ComponentProps> = ({
   onBackdropPress,
   onSwipeComplete,
   onTickPress,
-  // setInitialValue,
 }) => {
   let initialValue;
 
   useEffect(() => {
     initialValue = pickerItems[0];
-    console.log('Initial Value : ', initialValue);
-    // setInitialValue(initialValue);
   }, []);
 
   return (
@@ -41,9 +37,7 @@ const WheelPickerModal: React.FunctionComponent<ComponentProps> = ({
       style={styles.modal}
       onSwipeComplete={onSwipeComplete}
       onBackdropPress={onBackdropPress}
-      animationIn="slideInUp"
-      // swipeDirection={['down']}
-    >
+      animationIn="slideInUp">
       <View style={styles.modalContainer}>
         <Picker
           selectedValue={selectedItem ?? initialValue}

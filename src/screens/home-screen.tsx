@@ -42,13 +42,8 @@ const HomeScreen = (props: Props) => {
     try {
       const [notes] = await Promise.all([AsyncStorage.getItem(note_key)]);
       if (!notes) {
-        console.log('No Notes');
         return;
       }
-      console.log(
-        'Saved Notes List',
-        JSON.stringify(JSON.parse(notes), null, 3),
-      );
       setNotes(JSON.parse(notes));
     } catch (error) {
       console.log('Error while getting the saved notes');

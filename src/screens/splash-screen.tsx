@@ -28,7 +28,6 @@ const SplashScreen = (props: Props) => {
   const navigation = useNavigation<NavigationProp>();
 
   useEffect(() => {
-    console.log('in');
     getAppData();
   }, []);
 
