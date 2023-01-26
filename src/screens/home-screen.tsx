@@ -1,6 +1,7 @@
 import {
   ActivityIndicator,
   Dimensions,
+  FlatList,
   StyleSheet,
   Text,
   View,
@@ -13,11 +14,11 @@ import AppHeader from '../components/app-header';
 import MessageContainer from '../components/message-container';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {note_key} from '../constants/storage-keys';
-import asyncTimeout from '../utils/asyncTimeout';
 import {Note} from '../types/general-types';
 import {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import {MainStackParamList} from '../types/navigation-types';
 import {useIsFocused, useNavigation} from '@react-navigation/native';
+import NoteContainer from '../components/note-container';
 
 type Props = {};
 type NavigationProp = NativeStackNavigationProp<
@@ -30,9 +31,6 @@ const HomeScreen = (props: Props) => {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [notes, setNotes] = useState<Note[]>([]);
   const isFocused = useIsFocused();
-  useEffect(() => {
-    console.log('Loading state', isLoading);
-  }, [isLoading]);
 
   useEffect(() => {
     if (!isFocused) return;
@@ -64,6 +62,26 @@ const HomeScreen = (props: Props) => {
     });
   };
 
+  const renderNotes = () => {
+    return (
+      <FlatList
+        numColumns={1}
+        style={{
+          width: Dimensions.get('screen').width,
+          paddingHorizontal: 16,
+          marginTop: 2,
+        }}
+        showsHorizontalScrollIndicator={false}
+        showsVerticalScrollIndicator={false}
+        data={notes}
+        keyExtractor={(post: Note, index: number) => index.toString()}
+        renderItem={({item, index}) => (
+          <NoteContainer note={item} key={index} animationDelay={index + 1} />
+        )}
+      />
+    );
+  };
+
   return (
     <SafeAreaView style={styles.mainContainer}>
       <AppHeader title="Home" onAddPress={onAddPress} />
@@ -74,7 +92,7 @@ const HomeScreen = (props: Props) => {
       ) : (
         <View style={styles.contentContainer}>
           {notes.length ? (
-            <Text>yay</Text>
+            renderNotes()
           ) : (
             <MessageContainer
               message={`Hmm, it looks like you haven't created any notes yet. \n Press the Add note button or the '+' button on the top right of the screen to create your notes.`}

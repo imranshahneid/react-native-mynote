@@ -23,6 +23,7 @@ import ItemPicker from '../components/item-picker';
 import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {note_key} from '../constants/storage-keys';
+import NoteSavedModal from '../components/note-saved-modal';
 
 type Props = {};
 
@@ -45,10 +46,13 @@ const NoteEditor = (props: Props) => {
   const [isClientPickerVisible, setIsClientPickerVisible] =
     useState<boolean>(false);
   const [notesHeight, setNotesHeight] = useState<number>(100);
+  const [isNoteSavedModalVisible, setIsNoteSavedModalVisible] =
+    useState<boolean>(false);
 
   useEffect(() => {
-    console.log('To Create Note Id', route.params.toCreateNoteId);
-  }, []);
+    if (!isNoteSavedModalVisible) return;
+    closeSavedModal();
+  }, [isNoteSavedModalVisible]);
 
   const Formik = useFormik({
     initialValues: {
@@ -60,27 +64,42 @@ const NoteEditor = (props: Props) => {
     },
   });
 
+  const closeSavedModal = () => {
+    setTimeout(() => {
+      setIsCategoryPickerVisible(false);
+      setTimeout(() => {
+        navigation.goBack();
+      }, 1000);
+    }, 1500);
+  };
+
   const createNote = async (note: string) => {
-    const clientInfo = clientList.filter(
-      client => client.name === selectedClient,
-    );
-    if (!clientInfo) return;
-    const toSaveNote: Note = {
-      id: route.params.toCreateNoteId,
-      client: clientInfo[0],
-      category: selectedCategory,
-      note: note,
-    };
-    console.log('Note to be saved', JSON.stringify(toSaveNote, null, 3));
-    let savedNotes = await AsyncStorage.getItem(note_key);
-    if (!savedNotes) {
-      await AsyncStorage.setItem(note_key, JSON.stringify([toSaveNote]));
-      return;
+    try {
+      setIsLoading(true);
+      const clientInfo = clientList.filter(
+        client => client.name === selectedClient,
+      );
+      if (!clientInfo) return;
+      const toSaveNote: Note = {
+        id: route.params.toCreateNoteId,
+        client: clientInfo[0],
+        category: selectedCategory,
+        note: note,
+      };
+      let savedNotes = await AsyncStorage.getItem(note_key);
+      if (!savedNotes) {
+        await AsyncStorage.setItem(note_key, JSON.stringify([toSaveNote]));
+        return;
+      }
+      let parsedNotes: Note[] = JSON.parse(savedNotes);
+      parsedNotes = [...parsedNotes, toSaveNote];
+      await AsyncStorage.setItem(note_key, JSON.stringify(parsedNotes));
+      setIsNoteSavedModalVisible(true);
+    } catch (error) {
+      console.log('Error while saving notes', JSON.stringify(error, null, 3));
+    } finally {
+      setIsLoading(false);
     }
-    let parsedNotes: Note[] = JSON.parse(savedNotes);
-    parsedNotes = [...parsedNotes, toSaveNote];
-    await AsyncStorage.setItem(note_key, JSON.stringify(parsedNotes));
-    console.log('Save Successful');
   };
 
   const closeClientPickerModal = () => {
@@ -171,6 +190,11 @@ const NoteEditor = (props: Props) => {
           }
           setSelectedCatrgory(item as CategoryType);
         }}
+      />
+      <NoteSavedModal
+        isVisible={isNoteSavedModalVisible}
+        modalClick={closeSavedModal}
+        backDropPress={closeSavedModal}
       />
     </SafeAreaView>
   );
