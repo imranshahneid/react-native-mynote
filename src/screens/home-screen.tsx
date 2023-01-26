@@ -2,6 +2,7 @@ import {
   ActivityIndicator,
   Dimensions,
   FlatList,
+  Platform,
   StyleSheet,
   Text,
   View,
@@ -99,7 +100,12 @@ const HomeScreen = (props: Props) => {
             />
           )}
           <MyNoteButtonBase
-            style={styles.addNoteButton}
+            style={[
+              styles.addNoteButton,
+              {
+                bottom: Platform.OS === 'android' ? 55 : 12,
+              },
+            ]}
             title={'Add Note'}
             onPress={() => onAddPress()}
           />
@@ -114,7 +120,6 @@ export default HomeScreen;
 const styles = StyleSheet.create({
   addNoteButton: {
     position: 'absolute',
-    bottom: 12,
     right: 12,
     zIndex: 2,
   },

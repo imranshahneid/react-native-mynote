@@ -79,7 +79,7 @@ const NoteEditor = (props: Props) => {
       const clientInfo = clientList.filter(
         client => client.name === selectedClient,
       );
-      if (!clientInfo) return;
+      if (!clientInfo) return console.log('No Client Info');
       const toSaveNote: Note = {
         id: route.params.toCreateNoteId,
         client: clientInfo[0],
@@ -89,6 +89,7 @@ const NoteEditor = (props: Props) => {
       let savedNotes = await AsyncStorage.getItem(note_key);
       if (!savedNotes) {
         await AsyncStorage.setItem(note_key, JSON.stringify([toSaveNote]));
+        setIsNoteSavedModalVisible(true);
         return;
       }
       let parsedNotes: Note[] = JSON.parse(savedNotes);
@@ -124,6 +125,7 @@ const NoteEditor = (props: Props) => {
             <PostIcon
               style={styles.iconStyle}
               onPress={() => Formik.submitForm()}
+              isDisabled={isLoading}
             />
           )
         }

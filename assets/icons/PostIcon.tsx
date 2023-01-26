@@ -15,6 +15,7 @@ type Prop = {
   width?: string;
   onPress?: () => void;
   style?: StyleProp<ViewStyle>;
+  isDisabled?: boolean;
 };
 
 const PostIcon: React.FunctionComponent<Prop> = ({
@@ -23,9 +24,14 @@ const PostIcon: React.FunctionComponent<Prop> = ({
   width,
   onPress,
   style,
+  isDisabled,
 }) => {
   return (
-    <TouchableOpacity activeOpacity={0.7} onPress={onPress} style={[style]}>
+    <TouchableOpacity
+      activeOpacity={0.7}
+      onPress={onPress}
+      style={[style]}
+      disabled={isDisabled}>
       <Svg width={width ?? '24'} height={height ?? '24'} viewBox="0 0 24 24">
         <G
           id="vuesax_outline_send-2"
