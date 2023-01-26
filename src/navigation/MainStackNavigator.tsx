@@ -2,6 +2,7 @@ import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import {Colors} from '../constants/colors';
 import SplashScreen from '../screens/splash-screen';
 import {MainStackParamList} from '../types/navigation-types';
+import React from 'react';
 
 const MainStackNavigator = () => {
   const Stack = createNativeStackNavigator<MainStackParamList>();
